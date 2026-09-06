@@ -8,10 +8,14 @@ dist/
 
 # Secrets & runtime data (never commit)
 .env
+.env.*
+!.env.example
 .env.local
 data/
 *.log
 *.pid
+*.bundle
+*.tar.gz
 
 # OS noise
 .DS_Store
