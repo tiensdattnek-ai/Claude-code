@@ -5,6 +5,7 @@ import { log, uid, safeEqual, nowIso } from './util.js';
 import { bootstrapAuth, requireAuth, currentUser, setSessionCookie, clearSessionCookie, createSession, destroySession, isLocked, lockRemainingMs, registerFailure, registerSuccess, getAdmin, SESSION_COOKIE, parseCookies } from './auth.js';
 import { bootstrapStore, store } from './store.js';
 import { engineStatus, resolveEngineName, runTurn, warmup } from './engines/index.js';
+import { menosStats, menosLearn } from './engines/menosEngine.js';
 
 const app = express();
 app.disable('x-powered-by');
@@ -76,6 +77,21 @@ app.get('/api/config', (req, res) => {
 
 app.get('/api/status', (_req, res) => {
   res.json({ engine: engineStatus(), serverTime: nowIso() });
+});
+
+/* ---------------- menos brain (trainable local knowledge) ---------------- */
+app.get('/api/menos/stats', (_req, res) => {
+  res.json(menosStats());
+});
+
+app.post('/api/menos/learn', (req, res) => {
+  try {
+    const { title, content, tags, note } = req.body || {};
+    const result = menosLearn({ title, content, tags: Array.isArray(tags) ? tags : (typeof tags === 'string' ? tags.split(',') : []), note });
+    res.json(result);
+  } catch (err) {
+    res.status(400).json({ error: 'invalid_seed', message: err.message || 'Không học được chủ đề này.' });
+  }
 });
 
 /* ---------------- conversations ---------------- */

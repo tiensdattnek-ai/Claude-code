@@ -29,6 +29,11 @@ export const config = {
   apiModel: process.env.CLAUDE_MODEL || 'claude-sonnet-4-5',
   apiMaxTokens: int(process.env.API_MAX_TOKENS, 8192),
 
+  // --- laguna s 2.1 (OpenRouter-compatible) ---
+  openrouterKey: process.env.OPENROUTER_API_KEY || process.env.LAGUNA_API_KEY || null,
+  openrouterBaseUrl: (process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1').replace(/\/+$/, ''),
+  lagunaModel: process.env.LAGUNA_MODEL || 'anthropic/claude-sonnet-4.5',
+
   claudeCliBin: process.env.CLAUDE_CLI_BIN || 'claude',
   cliModel: process.env.CLAUDE_CLI_MODEL || process.env.CLAUDE_MODEL || null,
   cliMaxTurns: int(process.env.CLI_MAX_TURNS, 30),
@@ -42,4 +47,4 @@ export const config = {
   clientDist: path.join(ROOT, 'client', 'dist'),
 };
 
-export const SUPPORTED_ENGINES = ['auto', 'cli', 'api', 'demo'];
+export const SUPPORTED_ENGINES = ['auto', 'cli', 'api', 'demo', 'menos', 'laguna'];
