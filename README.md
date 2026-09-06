@@ -46,6 +46,9 @@ trong sandbox máy chủ · Stream SSE từng chữ realtime.
 │  │   cliEngine  → spawn `claude -p` NGAY TRONG     │              │
 │  │                sandbox (--resume, tools, JSON)  │              │
 │  │   apiEngine  → Anthropic Messages API (stream)  │              │
+│  │   menosEngine→ 🧠 Menos AI: não bộ cục bộ,       │              │
+│  │                offline, trainable, đọc mã nguồn  │              │
+│  │   lagunaEngine→🌊 Laguna S 2.1 (OpenRouter)      │              │
 │  │   demoEngine → trợ lý offline (fallback)        │              │
 │  └─────────────────────────────────────────────────┘              │
 └───────────────────────────────────────────────────────────────────┘
@@ -62,10 +65,13 @@ trong sandbox máy chủ · Stream SSE từng chữ realtime.
 │   ├── config.js            # Mọi cấu hình từ biến môi trường
 │   ├── util.js              # Logger, helpers
 │   └── engines/
-│       ├── index.js         # Chọn engine: auto → cli → api → demo
-│       ├── cliEngine.js     # Spawn Claude Code CLI trong sandbox
-│       ├── apiEngine.js     # Gọi Anthropic API trực tiếp
-│       └── demoEngine.js    # Mô phỏng offline (không cần key)
+│       ├── index.js           # Chọn engine: auto → cli → api → laguna → menos
+│       ├── cliEngine.js       # Spawn Claude Code CLI trong sandbox
+│       ├── apiEngine.js       # Gọi Anthropic API trực tiếp
+│       ├── menosEngine.js     # 🧠 Menos AI — não bộ local, trainable, đọc mã nguồn
+│       ├── menos-knowledge.js #   52 chủ đề tri thức tiếng Việt (seed)
+│       ├── lagunaEngine.js    # 🌊 Laguna S 2.1 — OpenRouter chat completions
+│       └── demoEngine.js      # Mô phỏng offline (fallback cũ, không cần key)
 ├── client/                  # React 18 + Vite
 │   ├── src/
 │   │   ├── App.jsx          # Điều phối auth / sidebar / chat / theme
@@ -102,7 +108,22 @@ claude                              # đăng nhập một lần (OAuth)
 Khi CLI có mặt, `ENGINE=auto` tự phát hiện → mọi chat chạy như một phiên
 Claude Code CLI ngay trong máy chủ (có thể bật **Agent tools** để cho phép
 Bash/Write/Edit…). Không có CLI cũng không có API key? Server rơi về
-**demo engine** để bạn vẫn dùng thử toàn bộ giao diện.
+**Menos AI** — bộ não tri thức cục bộ 52 chủ đề, chạy offline 100%.
+
+### 🧠 Menos AI (engine `menos`) — bộ não local, train được
+
+- Trả lời **52 chủ đề kỹ thuật** tiếng Việt (lập trình · web · dữ liệu · devops · công cụ & kỹ năng) — tra cứu theo từ khoá bỏ dấu + IDF, không cần mạng, không cần model.
+- **Đọc mã nguồn**: hỏi *"tóm tắt file server/store.js"* → Menos mở file trong workspace và liệt kê imports/exports/hàm/số dòng.
+- **Train**: `POST /api/menos/learn { title, tags, content }` — chủ đề mới lưu vào `data/menos-brain.json` (git-ignored), Menos trả lời ngay không cần restart.
+- **Trung thực**: không có trong não → nói thẳng + gợi ý engine mạnh hơn, thay vì bịa.
+- `GET /api/menos/stats` — sức khoẻ bộ não (số chủ đề theo nhóm, phiên bản).
+- Chọn engine theo từng tin nhắn ở góc phải thanh chat, hoặc `ENGINE=menos` cho toàn server.
+
+### 🌊 Laguna S 2.1 (engine `laguna`) — model hosted qua OpenRouter
+
+- Đặt `OPENROUTER_API_KEY` (+ tuỳ chọn `LAGUNA_MODEL`, `OPENROUTER_BASE_URL`) trong `.env`.
+- System prompt riêng của dự án — **không** nhúng tài liệu mật/system prompt "leak" của hãng nào.
+- Chưa có key? `laguna` tự fallback về Menos, không crash.
 
 ### Chế độ dev (hot reload)
 
@@ -117,7 +138,7 @@ npm run dev   # API :3000 + Vite :5173 (proxy /api)
 | `PORT` / `HOST` | `3000` / `0.0.0.0` | Web server |
 | `ADMIN_USERNAME` | `admin` | Tài khoản admin |
 | `ADMIN_PASSWORD` | *(tự sinh)* | Mật khẩu admin (hoặc `ADMIN_PASSWORD_HASH` scrypt) |
-| `ENGINE` | `auto` | `auto` \| `cli` \| `api` \| `demo` |
+| `ENGINE` | `auto` | `auto` \| `cli` \| `api` \| `menos` \| `laguna` \| `demo` |
 | `CLAUDE_CLI_BIN` | `claude` | Đường dẫn CLI (thử nghiệm có thể trỏ tới `test/bin/claude`) |
 | `CLAUDE_CLI_MODEL` | *(mặc định CLI)* | Ví dụ `claude-sonnet-4-5` |
 | `ALLOWED_TOOLS` | Bash, Edit, Write, Read… | Bộ công cụ khi bật "Agent tools" |
@@ -125,6 +146,9 @@ npm run dev   # API :3000 + Vite :5173 (proxy /api)
 | `WORKDIR` | thư mục dự án | Nơi agent CLI làm việc (mặc định là repo này) |
 | `ANTHROPIC_API_KEY` | *(trống)* | Bật engine API khi không có CLI |
 | `CLAUDE_MODEL` | `claude-sonnet-4-5` | Model cho engine API / CLI |
+| `OPENROUTER_API_KEY` | *(trống)* | Bật engine Laguna S 2.1 (OpenRouter) |
+| `LAGUNA_MODEL` | `anthropic/claude-sonnet-4.5` | Model cho Laguna (chuỗi OpenRouter bất kỳ) |
+| `OPENROUTER_BASE_URL` | `https://openrouter.ai/api/v1` | Đổi endpoint nếu dùng gateway khác |
 | `SESSION_TTL_HOURS` | `12` | Thời hạn đăng nhập |
 
 ## 🔌 Giao thức SSE (một lượt chat)
