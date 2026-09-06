@@ -13,7 +13,7 @@ const SUGGESTIONS = [
   { text: 'Giải thích design pattern Observer kèm ví dụ code', icon: 'pencil' },
 ];
 
-const LIVE_ENGINES = ['auto', 'cli', 'api', 'demo'];
+const LIVE_ENGINES = ['auto', 'cli', 'api', 'demo', 'menos', 'laguna'];
 
 export default function Chat({
   conversation,
@@ -384,6 +384,8 @@ function Topbar({ convo, isStreaming, statusText, toolsEnabled, onToggleTools, e
             <option value="auto">Auto</option>
             <option value="cli">Claude Code CLI (sandbox)</option>
             <option value="api">Anthropic API</option>
+            <option value="menos">🧠 Menos AI (não bộ local)</option>
+            <option value="laguna">🌊 Laguna S 2.1 (OpenRouter)</option>
             <option value="demo">Demo</option>
           </select>
         </div>
