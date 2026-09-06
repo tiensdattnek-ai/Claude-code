@@ -1,0 +1,96 @@
+#!/usr/bin/env node
+/*
+ * FAKE `claude` CLI used ONLY for offline integration tests.
+ * It emulates the Claude Code print-mode JSON protocol so we can verify
+ * the cliEngine parser without a real Anthropic account:
+ *   - OSC/ANSI noise around records (as the real CLI emits)
+ *   - system/init record carrying a session_id
+ *   - assistant tool_use + user tool_result records (stdout)
+ *   - stream_event text deltas (stderr) like modern CLI versions
+ *   - assistant final text record
+ * Records every invocation to the file in argv[0].env.FAKE_CLAUDE_LOG.
+ */
+import fs from 'node:fs';
+import { spawnSync } from 'node:child_process';
+
+const logFile = process.env.FAKE_CLAUDE_LOG || '/tmp/fake-claude.log';
+
+const args = process.argv.slice(2);
+const record = { args, ts: new Date().toISOString() };
+
+// --version probe
+if (args.includes('--version')) {
+  console.log('fake-claude 9.9.9 (test stub)');
+  process.exit(0);
+}
+
+const sessionId = record.session = `sess_fake_${Math.random().toString(36).slice(2, 10)}`;
+record.resuming = args.includes('--resume') ? args[args.indexOf('--resume') + 1] : null;
+
+const toolsOn = args.includes('--allowedTools');
+const prompt = fs.readFileSync(0, 'utf8');
+record.promptLen = prompt.length;
+record.promptHead = prompt.slice(0, 120);
+
+const OSC = '\x1b]0;Claude Code\x07';
+const CSI = (s) => `\x1b[${s}`;
+const out = (obj) => process.stdout.write(`${OSC}${CSI('?25l')}${CSI('0m')}${JSON.stringify(obj)}\n`);
+const err = (obj) => process.stderr.write(`${OSC}${CSI('?25l')}${CSI('0m')}${JSON.stringify(obj)}\n`);
+
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+
+const textMsg = (content, id) => ({
+  id: `msg_${id}`,
+  type: 'message',
+  role: 'assistant',
+  content: typeof content === 'string' ? [{ type: 'text', text: content }] : content,
+  model: 'claude-sonnet-4-5',
+});
+
+const main = async () => {
+  out({ type: 'system', subtype: 'init', cwd: process.cwd(), session_id: sessionId, model: 'claude-sonnet-4-5' });
+  await sleep(140);
+
+  if (toolsOn) {
+    // 1) assistant decides to run a tool
+    out({
+      type: 'assistant',
+      message: textMsg(
+        [{ type: 'text', text: 'Để tôi kiểm tra thư mục trước…' }, { type: 'tool_use', id: 'tu_1', name: 'Bash', input: { command: 'ls -la' } }],
+        'step1'
+      ),
+    });
+    await sleep(160);
+
+    // 2) user wrapper returns the tool result
+    out({
+      type: 'user',
+      message: {
+        role: 'user',
+        content: [{ type: 'tool_result', tool_use_id: 'tu_1', content: 'README.md  package.json  server/', is_error: false }],
+      },
+    });
+    await sleep(160);
+
+    // 3) final answer: a short delta burst on stderr (streaming), then full text on stdout
+    const finalText = 'Hoàn tất! **sandbox đang chạy đúng như mong đợi.**\n\n```\nREADME.md  package.json  server/\n```\n\nXong rồi nhé! 🚀';
+    err({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: 'Hoàn tất! ' } } });
+    err({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: '**sandbox đang chạy đúng như mong đợi.**' } } });
+    await sleep(120);
+    out({ type: 'assistant', message: textMsg(finalText, 'final') });
+  } else {
+    const answer = `Bạn hỏi: ${prompt.split('\n').pop().slice(0, 60)}\n\n(Đây là câu trả lời của **fake claude** — tools đang tắt nên không có tool call.)`;
+    err({ type: 'stream_event', event: { type: 'content_block_delta', index: 0, delta: { type: 'text_delta', text: answer } } });
+    await sleep(100);
+    out({ type: 'assistant', message: textMsg(answer, 'final') });
+  }
+
+  await sleep(80);
+  fs.appendFileSync(logFile, JSON.stringify(record) + '\n');
+  process.exit(0);
+};
+
+main().catch((e) => {
+  fs.appendFileSync(logFile, JSON.stringify({ ...record, error: e.message }) + '\n');
+  process.exit(1);
+});

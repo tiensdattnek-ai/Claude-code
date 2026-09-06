@@ -1,0 +1,37 @@
+{
+  "name": "claude-code-web-console",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A premium Claude Code chat console — runs locally, executes every chat inside this machine/sandbox via the Claude Code CLI, protected by an admin login.",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "setup": "npm install && npm --prefix client install",
+    "postinstall": "npm --prefix client install",
+    "dev": "concurrently -k -n api,web -c yellow,cyan \"node server/index.js\" \"npm --prefix client run dev\"",
+    "build": "npm --prefix client run build",
+    "start": "NODE_ENV=production node server/index.js",
+    "preview": "npm run build && npm start",
+    "test:dom": "node_modules/.bin/esbuild test/harness.jsx --bundle --format=esm --platform=node --jsx=automatic --loader:.jsx=jsx --external:jsdom --outfile=node_modules/.cache/harness.mjs && node node_modules/.cache/harness.mjs"
+  },
+  "keywords": [
+    "claude",
+    "claude-code",
+    "chat",
+    "console",
+    "sandbox",
+    "admin"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.1",
+    "esbuild": "^0.28.2",
+    "jsdom": "^30.0.1"
+  }
+}
