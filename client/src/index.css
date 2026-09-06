@@ -245,6 +245,16 @@ html[data-theme='dark'] .ambient::after { width: 500px; height: 500px; backgroun
 
 .main { flex: 1; display: flex; flex-direction: column; min-width: 0; position: relative; z-index: 1; background: var(--bg1); }
 
+/* dark translucent backdrop behind the mobile sidebar */
+.sb-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(4, 5, 12, 0.55);
+  backdrop-filter: blur(3px);
+  z-index: 4;
+  animation: fadeIn 0.25s ease;
+}
+
 /* ====================================================================
    SIDEBAR
    ==================================================================== */
@@ -418,7 +428,7 @@ html[data-theme='dark'] .ambient::after { width: 500px; height: 500px; backgroun
   transition: all 0.18s;
 }
 .tb-side-toggle:hover { background: var(--panel2); color: var(--text0); }
-.tb-title { display: flex; flex-direction: column; min-width: 0; }
+.tb-title { flex: 1; min-width: 0; display: flex; flex-direction: column; }
 .tb-title .name { font-family: var(--font-vn); font-size: 14.5px; font-weight: 700; color: var(--text0); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; letter-spacing: -0.01em; }
 .tb-title .sub { font-size: 11px; color: var(--text3); display: flex; align-items: center; gap: 6px; }
 .tb-title .sub .live-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ok); box-shadow: 0 0 8px var(--ok); animation: pulseDot 1.8s infinite; }
@@ -925,4 +935,13 @@ html[data-theme='dark'] .md c { color: #e8a8ff; }
   .hero-chips { flex-direction: column; align-items: stretch; }
   .hero-chip { justify-content: center; }
   .tb-title .sub { display: none; }
+  .tb-right { gap: 4px; }
+  .switch .switch-label { display: none; }
+  .topbar { padding: 0 10px; gap: 8px; }
+  .composer-zone { padding: 6px 10px 10px; }
+  .messages-inner { padding: 16px 10px 8px; gap: 18px; }
+  .composer-hints { display: none; }
+  .ai-panel { padding: 13px 13px 11px; }
+  .msg-avatar { width: 28px; height: 28px; border-radius: 9px; }
+  .bubble-user { max-width: 92%; }
 }

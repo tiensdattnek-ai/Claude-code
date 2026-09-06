@@ -24,6 +24,7 @@ export default function Chat({
   username,
   theme,
   onToggleTheme,
+  onOpenSidebar,
 }) {
   const [convo, setConvo] = useState(conversation);
   const [streaming, setStreaming] = useState(false);
@@ -279,6 +280,7 @@ export default function Chat({
         isBusy={isBusyElsewhere}
         theme={theme}
         onToggleTheme={onToggleTheme}
+        onOpenSidebar={onOpenSidebar}
       />
 
       <div className="messages-scroll" ref={scrollRef}>
@@ -351,7 +353,7 @@ function Hero({ onPick, canSend, engineActive }) {
   );
 }
 
-function Topbar({ convo, isStreaming, statusText, toolsEnabled, onToggleTools, engine, onEngine, isBusy, theme, onToggleTheme }) {
+function Topbar({ convo, isStreaming, statusText, toolsEnabled, onToggleTools, engine, onEngine, isBusy, theme, onToggleTheme, onOpenSidebar }) {
   const sub = isBusy
     ? '⏳ hội thoại đang được xử lý…'
     : isStreaming
@@ -359,6 +361,11 @@ function Topbar({ convo, isStreaming, statusText, toolsEnabled, onToggleTools, e
       : `sandbox · ${engine} engine`;
   return (
     <div className="topbar">
+      {onOpenSidebar && (
+        <button className="tb-side-toggle" onClick={onOpenSidebar} title="Mở danh sách hội thoại" aria-label="Mở menu">
+          <Ico name="menu" size={17} />
+        </button>
+      )}
       <div className="tb-title">
         <span className="name">{convo?.title || 'Hội thoại mới'}</span>
         <span className="sub">

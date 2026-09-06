@@ -178,6 +178,7 @@ export default function App() {
   return (
     <div className="app">
       <div className="ambient" />
+      {mobileOpen && <div className="sb-backdrop" onClick={() => setMobileOpen(false)} />}
       <Sidebar
         collapsed={sideCollapsed}
         mobileOpen={mobileOpen}
@@ -205,6 +206,7 @@ export default function App() {
           username={username}
           theme={theme}
           onToggleTheme={() => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))}
+          onOpenSidebar={() => setMobileOpen((v) => !v)}
         />
       </div>
     </div>
